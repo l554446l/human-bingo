@@ -3,99 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Human Bingo</title>
+    <title>GCF Faculty Bingo</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             text-align: center;
-            background-color: #f0f2f5;
-            margin: 10px;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px 10px;
         }
-        h1 { color: #333; }
-        /* Create the 5x5 Bingo Grid */
+        h1 { 
+            color: #1a365d; 
+            margin-bottom: 5px;
+            font-size: 28px;
+        }
+        .description {
+            color: #4a5568;
+            font-size: 14px;
+            max-width: 400px;
+            margin: 0 auto 20px auto;
+            line-height: 1.4;
+        }
+        /* 5x5 Bingo Grid */
         .bingo-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 8px;
-            max-width: 500px;
+            gap: 6px;
+            max-width: 450px;
             margin: 0 auto;
         }
         .tile {
-            aspect-ratio: 1; /* Keeps tiles perfectly square */
+            aspect-ratio: 1;
             background-color: #ffffff;
-            border: 2px solid #ccc;
-            border-radius: 8px;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 6px;
             display: flex;
             align-items: center;
-            justify-center: center;
-            padding: 5px;
-            font-size: 11px;
-            font-weight: bold;
+            justify-content: center;
+            padding: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            color: #2d3748;
             cursor: pointer;
             overflow: hidden;
             background-size: cover;
             background-position: center;
-            text-shadow: 1px 1px 2px white, -1px -1px 2px white; /* Keeps text readable over photos */
-            transition: transform 0.1s;
+            /* Text shadow keeps text highly readable over any photo background */
+            text-shadow: 1px 1px 2px white, -1px -1px 2px white, 1px -1px 2px white, -1px 1px 2px white;
+            transition: transform 0.1s, box-shadow 0.1s;
+            user-select: none;
         }
-        .tile:active { transform: scale(0.95); }
-        /* Hidden camera input */
+        .tile:active { 
+            transform: scale(0.95); 
+        }
+        /* Unique styling for the center logo tile */
+		.logo-tile {
+			background-color: #ffffff;
+			background-image: url('logo.png'); /* Targets the file in your GitHub repo */
+			background-size: contain;
+			background-repeat: no-repeat;
+			background-position: center;
+			cursor: default;
+		}
+        .logo-tile:active {
+            transform: none;
+        }
         #camera-input { display: none; }
     </style>
 </head>
 <body>
 
-    <h1>Human Bingo 📸</h1>
-    <p>Tap a tile to snap a photo!</p>
+    <h1>GCF Faculty Bingo 📸</h1>
+    <p class="description">
+        Find a fellow teacher who matches a clue, tap the box to snap their photo, and lock it in. First one to complete the grid wins!
+    </p>
 
     <div class="bingo-grid" id="bingoBoard"></div>
     
-    <!-- The magic input that triggers the mobile camera -->
+    <!-- Hidden input to trigger the mobile camera -->
     <input type="file" id="camera-input" accept="image/*" capture="environment">
 
     <script>
-        // Your list of 25 bingo prompts
+        // The 25 specific prompts arranged exactly top-to-bottom, left-to-right
         const prompts = [
-            "Has a pet dog", "Speaks 3+ languages", "Left-handed", "Born in another state", "Can play guitar",
-            "Has a tattoo", "Loves spicy food", "Is an only child", "Has broken a bone", "Wearing blue",
-            "Visits the gym daily", "Loves anime", "Can whistle loudly", "FREE SPACE", "Has a cat",
-            "Owns a motorcycle", "Coffee addict", "Born in the same month", "Can juggle", "Has been to Europe",
-            "Plays video games", "Can cook lasagna", "Is wearing glasses", "Has a garden", "Likes pineapple on pizza"
+            "tapos na sa course outline", 
+            "single", 
+            "wears white sneakers", 
+            "singerist ng \"Inspire, Excel, Achieve\"", 
+            "coffee lover",
+            
+            "5 and up years of teaching in GCF", 
+            "long hair", 
+            "may nalagay sa bag na cellphone ng iba", 
+            "nasa 40 years old up", 
+            "with eyeglasses",
+            
+            "gusto na magpakasal", 
+            "may bangs", 
+            "CENTER_LOGO_SPACE", // The 13th item (Index 12)
+            "non-adviser", 
+            "may color ang hair",
+            
+            "trentahin, gusto na ng hilot", 
+            "brings more than 2 bags", 
+            "can play instrument", 
+            "may nanliligaw or nililigawan", 
+            "high school teacher",
+            
+            "iPhone user (fully paid)", 
+            "may lesson plan na", 
+            "may gadget loan", 
+            "elem teacher", 
+            "lead teacher"
         ];
 
-        const board = document.getElementById('bingoBoard');
+        const board = document.getElementById('bimgBoard');
         const cameraInput = document.getElementById('camera-input');
         let activeTile = null;
 
-        // Generate the board
-        prompts.forEach((prompt) => {
+        // Render the board dynamically
+        prompts.forEach((prompt, index) => {
             const tile = document.createElement('div');
             tile.classList.add('tile');
-            tile.innerText = prompt;
             
-            // When a tile is clicked, trigger the hidden camera input
-            tile.addEventListener('click', () => {
-                activeTile = tile;
-                cameraInput.click();
-            });
+            // Check if it is the center tile
+            if (index === 12) {
+                tile.classList.add('logo-tile');
+                // Optional text inside logo tile, leave empty if you just want the logo image
+                tile.innerText = ""; 
+            } else {
+                tile.innerText = prompt;
+                
+                // Clicking prompts triggers the camera
+                tile.addEventListener('click', () => {
+                    activeTile = tile;
+                    cameraInput.click();
+                });
+            }
             
-            board.appendChild(tile);
+            bingoBoard.appendChild(tile);
         });
 
-        // When the user takes a photo, handle the file
+        // Handle the photo capture and apply as background
         cameraInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file && activeTile) {
                 const reader = new FileReader();
                 reader.onload = function(event) {
-                    // Set the captured photo as the background of the clicked tile
                     activeTile.style.backgroundImage = `url('${event.target.result}')`;
-                    activeTile.style.color = '#000'; // Ensure text remains visible
                 }
                 reader.readAsDataURL(file);
             }
-            // Reset input value so the camera can be triggered for the same tile if retaken
-            cameraInput.value = '';
+            cameraInput.value = ''; // Reset
         });
     </script>
 </body>
