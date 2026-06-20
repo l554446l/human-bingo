@@ -83,7 +83,7 @@
 
     <script>
         // ⚠️ PASTE YOUR GOOGLE SHEET CSV LINK HERE
-        const GOOGLE_SHEET_CSV_URL = https://docs.google.com/spreadsheets/d/e/2PACX-1vSd93onSdet2aBZxNCxpKUpIavqKQSIIOc7xDxvr4_Zo3BmtmUNxBZpoGL3XZ9FyqZjYen_ZaEumQ78/pub?output=csv;
+        const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSd93onSdet2aBZxNCxpKUpIavqKQSIIOc7xDxvr4_Zo3BmtmUNxBZpoGL3XZ9FyqZjYen_ZaEumQ78/pub?output=csv';
 
         const board = document.getElementById('bingoBoard');
         const cameraInput = document.getElementById('camera-input');
@@ -124,7 +124,7 @@
         // Fetch and map the grid matrix
         fetch(GOOGLE_SHEET_CSV_URL)
             .then(response => response.text())
-            .then(matrix) => {
+            .then(csvText => {
                 const matrix = parseCSVToMatrix(csvText);
 
                 // Title is at Row 2, Col B (Matrix index row 1, col 1)
