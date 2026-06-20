@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GCF Faculty Bingo</title>
+    <title>GCF Grid Bingo App</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -23,6 +23,11 @@
             max-width: 400px;
             margin: 0 auto 20px auto;
             line-height: 1.4;
+        }
+        .loading {
+            font-size: 18px;
+            color: #4a5568;
+            margin-top: 50px;
         }
         /* 5x5 Bingo Grid */
         .bingo-grid {
@@ -48,105 +53,127 @@
             overflow: hidden;
             background-size: cover;
             background-position: center;
-            /* Text shadow keeps text highly readable over any photo background */
             text-shadow: 1px 1px 2px white, -1px -1px 2px white, 1px -1px 2px white, -1px 1px 2px white;
-            transition: transform 0.1s, box-shadow 0.1s;
+            transition: transform 0.1s;
             user-select: none;
         }
-        .tile:active { 
-            transform: scale(0.95); 
+        .tile:active { transform: scale(0.95); }
+        .logo-tile {
+            background-color: #ffffff;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            cursor: default;
         }
-        /* Unique styling for the center logo tile */
-		.logo-tile {
-			background-color: #ffffff;
-			background-image: url('logo.png'); /* Targets the file in your GitHub repo */
-			background-size: contain;
-			background-repeat: no-repeat;
-			background-position: center;
-			cursor: default;
-		}
-        .logo-tile:active {
-            transform: none;
-        }
+        .logo-tile:active { transform: none; }
         #camera-input { display: none; }
     </style>
 </head>
 <body>
 
-    <h1>GCF Faculty Bingo 📸</h1>
-    <p class="description">
-        Find a fellow teacher or staff who matches a clue.<br>
-		Tap the box, and take a <b>selfie</b> together!<br>
-		First one to lock in all their matches wins!
-    </p>
+    <div id="loading-state" class="loading">Loading Bingo Board...</div>
 
-    <div class="bingo-grid" id="bingoBoard"></div>
+    <div id="game-state" style="display: none;">
+        <h1 id="main-title">Loading...</h1>
+        <p class="description" id="main-description"></p>
+        <div class="bingo-grid" id="bingoBoard"></div>
+    </div>
     
-    <!-- Hidden input to trigger the mobile camera -->
     <input type="file" id="camera-input" accept="image/*" capture="user">
 
     <script>
-        // The 25 specific prompts arranged exactly top-to-bottom, left-to-right
-        const prompts = [
-            "tapos na sa course outline", 
-            "single", 
-            "wears white sneakers", 
-            "singerist ng \"Inspire, Excel, Achieve\"", 
-            "coffee lover",
-            
-            "5 and up years of teaching in GCF", 
-            "long hair", 
-            "may nalagay sa bag na cellphone ng iba", 
-            "nasa 40 years old up", 
-            "with eyeglasses",
-            
-            "gusto na magpakasal", 
-            "may bangs", 
-            "CENTER_LOGO_SPACE", // The 13th item (Index 12)
-            "non-adviser", 
-            "may color ang hair",
-            
-            "trentahin, gusto na ng hilot", 
-            "brings more than 2 bags", 
-            "can play instrument", 
-            "may nanliligaw or nililigawan", 
-            "high school teacher",
-            
-            "iPhone user (fully paid)", 
-            "may lesson plan na", 
-            "may gadget loan", 
-            "elem teacher", 
-            "lead teacher"
-        ];
+        // ⚠️ PASTE YOUR GOOGLE SHEET CSV LINK HERE
+        const GOOGLE_SHEET_CSV_URL = 'YOUR_GOOGLE_SHEET_CSV_URL_HERE';
 
-        const board = document.getElementById('bimgBoard');
+        const board = document.getElementById('bingoBoard');
         const cameraInput = document.getElementById('camera-input');
         let activeTile = null;
 
-        // Render the board dynamically
-        prompts.forEach((prompt, index) => {
-            const tile = document.createElement('div');
-            tile.classList.add('tile');
-            
-            // Check if it is the center tile
-            if (index === 12) {
-                tile.classList.add('logo-tile');
-                // Optional text inside logo tile, leave empty if you just want the logo image
-                tile.innerText = ""; 
-            } else {
-                tile.innerText = prompt;
-                
-                // Clicking prompts triggers the camera
-                tile.addEventListener('click', () => {
-                    activeTile = tile;
-                    cameraInput.click();
-                });
-            }
-            
-            bingoBoard.appendChild(tile);
-        });
+        // Custom parser to split CSV lines while respecting commas inside quotes
+        function parseCSVToMatrix(text) {
+            let lines = [];
+            let row = [];
+            let cell = '';
+            let inQuotes = false;
 
-        // Handle the photo capture and apply as background
+            for (let i = 0; i < text.length; i++) {
+                let char = text[i];
+                let nextChar = text[i+1];
+
+                if (inQuotes) {
+                    if (char === '"') {
+                        if (nextChar === '"') { cell += '"'; i++; } 
+                        else { inQuotes = false; }
+                    } else { cell += char; }
+                } else {
+                    if (char === '"') { inQuotes = true; } 
+                    else if (char === ',') { row.push(cell.trim()); cell = ''; } 
+                    else if (char === '\n' || char === '\r') {
+                        if (char === '\r' && nextChar === '\n') { i++; }
+                        row.push(cell.trim());
+                        lines.push(row);
+                        row = [];
+                        cell = '';
+                    } else { cell += char; }
+                }
+            }
+            if (cell || row.length > 0) { row.push(cell.trim()); lines.push(row); }
+            return lines;
+        }
+
+        // Fetch and map the grid matrix
+        fetch(GOOGLE_SHEET_CSV_URL)
+            .then(response => response.text())
+            .then(matrix) => {
+                const matrix = parseCSVToMatrix(csvText);
+
+                // Title is at Row 2, Col B (Matrix index row 1, col 1)
+                document.getElementById('main-title').innerText = matrix[1]?.[1] || "Bingo";
+                
+                // Description is at Row 3, Col B (Matrix index row 2, col 1)
+                document.getElementById('main-description').innerHTML = matrix[2]?.[1] || "";
+
+                // Generate 5x5 grid targeting Sheet Rows 5 to 9 (Indices 4 to 8)
+                // and Sheet Columns B to F (Indices 1 to 5)
+                for (let r = 4; r <= 8; r++) {
+                    for (let c = 1; c <= 5; c++) {
+                        const tile = document.createElement('div');
+                        tile.classList.add('tile');
+                        
+                        // Check if this is the center tile (Sheet Row 7, Column D -> matrix[6][3])
+                        if (r === 6 && c === 3) {
+                            tile.classList.add('logo-tile');
+                            
+                            let logoTarget = matrix[6]?.[3] || '';
+                            // Smart clean up: If it's blank, or just says a generic label like "LOGO", 
+                            // fallback to the local 'logo.png' in GitHub.
+                            if (!logoTarget || logoTarget.toLowerCase() === 'logo' || logoTarget === '') {
+                                logoTarget = 'logo.png';
+                            }
+                            
+                            tile.style.backgroundImage = `url('${logoTarget}')`;
+                        } else {
+                            // Extract clue text safely
+                            tile.innerText = matrix[r]?.[c] || "";
+                            
+                            tile.addEventListener('click', () => {
+                                activeTile = tile;
+                                cameraInput.click();
+                            });
+                        }
+                        board.appendChild(tile);
+                    }
+                }
+
+                document.getElementById('loading-state').style.display = 'none';
+                document.getElementById('game-state').style.display = 'block';
+            })
+            .catch(err => {
+                document.getElementById('loading-state').innerText = "Failed to load board data.";
+                console.error(err);
+            });
+
+        // Camera capture logic
         cameraInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file && activeTile) {
@@ -156,7 +183,7 @@
                 }
                 reader.readAsDataURL(file);
             }
-            cameraInput.value = ''; // Reset
+            cameraInput.value = '';
         });
     </script>
 </body>
